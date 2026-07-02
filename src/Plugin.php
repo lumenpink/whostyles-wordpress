@@ -36,6 +36,13 @@ class Plugin {
     private ?PostHandler $postHandler = null;
 
     /**
+     * Webmention and integration handler.
+     *
+     * @var WebmentionHandler|null
+     */
+    private ?WebmentionHandler $webmentionHandler = null;
+
+    /**
      * Admin settings handler.
      *
      * @var Settings|null
@@ -73,6 +80,9 @@ class Plugin {
 
         $this->postHandler = new PostHandler();
         $this->postHandler->registerHooks();
+
+        $this->webmentionHandler = new WebmentionHandler();
+        $this->webmentionHandler->registerHooks();
     }
 
     /**
@@ -100,5 +110,14 @@ class Plugin {
      */
     public function getPostHandler(): ?PostHandler {
         return $this->postHandler;
+    }
+
+    /**
+     * Retrieves the Webmention handler instance.
+     *
+     * @return WebmentionHandler|null
+     */
+    public function getWebmentionHandler(): ?WebmentionHandler {
+        return $this->webmentionHandler;
     }
 }

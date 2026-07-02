@@ -21,6 +21,7 @@ test('plugin registers all wordpress hooks on initialize', function (): void {
     expect(Actions\has_added('wp_head'))->toBeGreaterThan(0);
     expect(Actions\has_added('add_meta_boxes'))->toBeGreaterThan(0);
     expect(Actions\has_added('save_post'))->toBeGreaterThan(0);
+    expect(Actions\has_added('wp_insert_comment'))->toBeGreaterThan(0);
 
     // Verify administration settings panel actions.
     expect(Actions\has_added('admin_menu'))->toBeGreaterThan(0);
