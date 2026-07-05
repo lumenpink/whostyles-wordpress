@@ -25,12 +25,34 @@ class PostHandler {
      * @return void
      */
     public function registerHooks(): void {
+        add_action('init', [$this, 'registerPostMeta']);
         add_action('add_meta_boxes', [$this, 'addPostMetaBox']);
         add_action('save_post', [$this, 'savePostMetaBox']);
         add_action('wp_enqueue_scripts', [$this, 'enqueueAssets']);
+        add_action('admin_enqueue_scripts', [$this, 'enqueueAdminAssets']);
+        add_action('enqueue_block_editor_assets', [$this, 'enqueueBlockEditorAssets']);
         add_action('send_headers', [$this, 'sendHttpHeader']);
         add_action('wp_head', [$this, 'injectMetaTag']);
         add_filter('the_content', [$this, 'applyPostWhostyle']);
+    }
+
+    /**
+     * Registers post meta fields for Gutenberg REST API compatibility.
+     *
+     * @return void
+     */
+    public function registerPostMeta(): void {
+        $screens = ['post', 'page'];
+        foreach ($screens as $screen) {
+            register_post_meta($screen, self::META_KEY_HASH, [
+                'show_in_rest' => true,
+                'single' => true,
+                'type' => 'string',
+                'auth_callback' => function (): bool {
+                    return current_user_can('edit_posts');
+                }
+            ]);
+        }
     }
 
     /**
@@ -44,6 +66,75 @@ class PostHandler {
             plugins_url('assets/css/whostyles-combined.css', dirname(__FILE__)),
             [],
             '0.1.0'
+        );
+    }
+
+    /**
+     * Enqueues admin styling and scripts for live preview.
+     *
+     * @param string $hook The current admin page hook.
+     * @return void
+     */
+    public function enqueueAdminAssets(string $hook): void {
+        if ($hook !== 'post.php' && $hook !== 'post-new.php') {
+            return;
+        }
+
+        // Enqueue the main combined styling for preview visual rendering.
+        $this->enqueueAssets();
+
+        // Enqueue core JS decoder.
+        wp_enqueue_script(
+            'whostyle-core',
+            plugins_url('assets/js/whostyle-core.js', dirname(__FILE__)),
+            [],
+            '0.1.0',
+            true
+        );
+
+        // Enqueue admin DOM live preview script.
+        wp_enqueue_script(
+            'whostyles-admin',
+            plugins_url('assets/js/whostyles-admin.js', dirname(__FILE__)),
+            ['whostyle-core'],
+            '0.1.0',
+            true
+        );
+    }
+
+    /**
+     * Enqueues assets for the Gutenberg Block Editor.
+     *
+     * @return void
+     */
+    public function enqueueBlockEditorAssets(): void {
+        if (!Settings::isPostsEnabled()) {
+            return;
+        }
+
+        // Core JS decoder.
+        wp_enqueue_script(
+            'whostyle-core',
+            plugins_url('assets/js/whostyle-core.js', dirname(__FILE__)),
+            [],
+            '0.1.0',
+            true
+        );
+
+        // Gutenberg React Sidebar integration.
+        wp_enqueue_script(
+            'whostyles-gutenberg',
+            plugins_url('assets/js/whostyles-gutenberg.js', dirname(__FILE__)),
+            [
+                'wp-plugins',
+                'wp-edit-post',
+                'wp-element',
+                'wp-components',
+                'wp-data',
+                'whostyle-core'
+            ],
+            '0.1.0',
+            true
         );
     }
 
@@ -88,7 +179,7 @@ class PostHandler {
         }
 
         echo '<p>';
-        echo '<label for="whostyles_hash_field">';
+        echo '<label for="whostyles_hash_field" style="display:block; font-weight:bold; margin-bottom:5px;">';
         echo esc_html__('Enter Whostyle V1 Hash:', 'whostyles');
         echo '</label>';
         echo '<input type="text" id="whostyles_hash_field" name="whostyles_hash_field" value="'
@@ -101,6 +192,30 @@ class PostHandler {
             'whostyles'
         );
         echo '</p>';
+
+        // Injected Live Preview area.
+        echo '<div id="whostyles_preview_container" style="margin-top:15px; display:none;">';
+        echo '<div style="font-weight:bold; margin-bottom:5px;">' . esc_html__('Live Preview', 'whostyles') . '</div>';
+        echo '<div style="display:flex; gap:10px; flex-wrap:wrap;">';
+        // Light Mode preview.
+        echo '<div style="flex:1; min-width:140px; border:1px solid #ccc; padding:10px; border-radius:4px;">';
+        echo '<div style="font-size:9px; color:#666; margin-bottom:5px; text-transform:uppercase;">Light Mode</div>';
+        echo '<div id="whostyles_preview_light" style="padding:5px;">';
+        echo '<h4 style="margin:0 0 5px 0;">Heading</h4>';
+        echo '<p style="margin:0; font-size:12px;">This is a preview.</p>';
+        echo '</div>';
+        echo '</div>';
+        // Dark Mode preview.
+        echo '<div style="flex:1; min-width:140px; border:1px solid #333; background:#222; color:#fff; padding:10px;'
+            . ' border-radius:4px;">';
+        echo '<div style="font-size:9px; color:#aaa; margin-bottom:5px; text-transform:uppercase;">Dark Mode</div>';
+        echo '<div id="whostyles_preview_dark" style="padding:5px;">';
+        echo '<h4 style="margin:0 0 5px 0;">Heading</h4>';
+        echo '<p style="margin:0; font-size:12px;">This is a preview.</p>';
+        echo '</div>';
+        echo '</div>';
+        echo '</div>';
+        echo '</div>';
     }
 
     /**
@@ -137,8 +252,8 @@ class PostHandler {
             return;
         }
 
-        // Validate hash structure.
-        if (preg_match('/^{ws1:[A-Za-z0-9\-_]{40}}$/', $hash)) {
+        // Validate hash structure: {ws1:48base64chars}
+        if (preg_match('/^{ws1:[A-Za-z0-9\-_]{48}}$/', $hash)) {
             update_post_meta($postId, self::META_KEY_HASH, $hash);
         }
     }

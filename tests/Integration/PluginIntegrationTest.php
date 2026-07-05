@@ -16,7 +16,10 @@ test('plugin registers all wordpress hooks on initialize', function (): void {
     expect(Filters\has_added('the_content'))->toBeGreaterThan(0);
 
     // Verify action hooks for assets, headers, metadata, and metaboxes.
+    expect(Actions\has_added('init'))->toBeGreaterThan(0);
     expect(Actions\has_added('wp_enqueue_scripts'))->toBeGreaterThan(0);
+    expect(Actions\has_added('admin_enqueue_scripts'))->toBeGreaterThan(0);
+    expect(Actions\has_added('enqueue_block_editor_assets'))->toBeGreaterThan(0);
     expect(Actions\has_added('send_headers'))->toBeGreaterThan(0);
     expect(Actions\has_added('wp_head'))->toBeGreaterThan(0);
     expect(Actions\has_added('add_meta_boxes'))->toBeGreaterThan(0);
