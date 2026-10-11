@@ -1,0 +1,70 @@
+name: "CI / CD Pipeline"
+
+on:
+  push:
+    branches:
+      - main
+  pull_request:
+    branches:
+      - main
+
+jobs:
+  quality:
+    name: "Code Quality & Security Audit"
+    runs-on: codeberg-tiny
+    steps:
+      - name: "Checkout code"
+        uses: https://github.com/actions/checkout@v4
+
+      - name: "Setup PHP"
+        uses: https://github.com/shivammathur/setup-php@v2
+        with:
+          php-version: '8.2'
+          coverage: none
+
+      - name: "Install Composer Dependencies"
+        run: composer install --no-interaction --prefer-dist --optimize-autoloader
+
+      - name: "Security Audit"
+        run: composer run-script security:audit
+
+      - name: "Static Analysis (PHPStan)"
+        run: composer run-script phpstan
+
+  test:
+    name: "Automated Tests (Pest)"
+    runs-on: codeberg-tiny
+    steps:
+      - name: "Checkout code"
+        uses: https://github.com/actions/checkout@v4
+
+      - name: "Setup PHP"
+        uses: https://github.com/shivammathur/setup-php@v2
+        with:
+          php-version: '8.2'
+          coverage: none
+
+      - name: "Install Composer Dependencies"
+        run: composer install --no-interaction --prefer-dist --optimize-autoloader
+
+      - name: "Execute Pest Test Suite"
+        run: vendor/bin/pest
+
+  gost-audit:
+    name: "GOST Compliance & Anatomy Audit"
+    runs-on: codeberg-tiny
+    steps:
+      - name: "Checkout code"
+        uses: https://github.com/actions/checkout@v4
+
+      - name: "Verify Essential GOST Anatomy"
+        run: |
+          test -f GOSTVER || { echo "GOSTVER missing"; exit 1; }
+          test -f README.md || { echo "README.md missing"; exit 1; }
+          test -f LICENSE || { echo "LICENSE missing"; exit 1; }
+          test -f VERSION || { echo "VERSION missing"; exit 1; }
+          test -f CHANGELOG.md || { echo "CHANGELOG.md missing"; exit 1; }
+          test -f .editorconfig || { echo ".editorconfig missing"; exit 1; }
+          test -f site/_headers || { echo "site/_headers missing"; exit 1; }
+          test -f site/index.html || { echo "site/index.html missing"; exit 1; }
+          echo "Todos os requisitos anatômicos da norma GOST foram validados com sucesso."

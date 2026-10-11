@@ -9,3 +9,4 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 - Adequação aos padrões de engenharia da norma GOST.
+- Configuração de pipeline de CI/CD para Forgejo Actions (.forgejo/workflows/ci.yaml) com auditoria de segurança, PHPStan, Pest e integridade anatômica GOST.
