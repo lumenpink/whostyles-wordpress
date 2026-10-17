@@ -48,6 +48,12 @@ vendor/bin/phpstan analyse
 
 ---
 
-## License
-This project is licensed under the GNU General Public License v2.0 (GPL-2.0). See [LICENSE](LICENSE) for details.
-This plugin is compliant with the requirements for publishing on the WordPress.org plugin directory.
+## 📄 Licença
+
+Este plugin para WordPress é distribuído como software livre sob a licença **GPL-2.0-or-later**, em estrita conformidade com os requisitos de distribuição do WordPress.org:
+
+| Componente | Licença | Arquivo |
+| :--- | :--- | :--- |
+| **Código do Plugin** | GPL-2.0-or-later | [`LICENSE`](LICENSE) |
+| **Logotipos e Identidade** | CC-BY-ND-4.0 | [`LICENSE-LOGO`](LICENSE-LOGO) |
+| **Mídias e Ilustrações** | CC-BY-SA-4.0 | [`LICENSE-MEDIA`](LICENSE-MEDIA) |
